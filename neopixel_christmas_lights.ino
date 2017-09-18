@@ -40,7 +40,7 @@ void setup() {
 }
 
 void loop() {
-  checkButton();
+  CheckButtonPress();
 
   // Ensure that animations keep animating
   if (doCycle) {
@@ -48,7 +48,7 @@ void loop() {
   }
 }
 
-bool checkButton() {
+bool CheckButtonPress() {
   bool newState = digitalRead(BUTTON_PIN); // Get current button state.
 
   // Check if state changed from high to low (button press).
@@ -136,7 +136,7 @@ void christmasColorWipe(uint8_t wait) {
     delay(wait);
 
     // button pressed in the middle of the animation, stop execution of this animation
-    if (checkButton() == LOW) {
+    if (CheckButtonPress() == LOW) {
       return;
     }
   }
@@ -150,7 +150,7 @@ void colorWipe(uint32_t c, uint8_t wait) {
     delay(wait);
 
     // button pressed in the middle of the animation, stop execution of this animation
-    if (checkButton() == LOW) {
+    if (CheckButtonPress() == LOW) {
       return;
     }
   }
@@ -167,7 +167,7 @@ void rainbow(uint8_t wait) {
     delay(wait);
 
     // button pressed in the middle of the animation, stop execution of this animation
-    if (checkButton() == LOW) {
+    if (CheckButtonPress() == LOW) {
       return;
     }
   }
@@ -185,7 +185,7 @@ void rainbowCycle(uint8_t wait) {
     delay(wait);
 
     // button pressed in the middle of the animation, stop execution of this animation
-    if (checkButton() == LOW) {
+    if (CheckButtonPress() == LOW) {
       return;
     }
   }
@@ -208,7 +208,7 @@ void theaterChase(uint32_t c, uint8_t wait) {
     }
 
     // button pressed in the middle of the animation, stop execution of this animation
-    if (checkButton() == LOW) {
+    if (CheckButtonPress() == LOW) {
       return;
     }
   }
@@ -231,7 +231,7 @@ void theaterChaseRainbow(uint8_t wait) {
     }
 
     // button pressed in the middle of the animation, stop execution of this animation
-    if (checkButton() == LOW) {
+    if (CheckButtonPress() == LOW) {
       return;
     }
   }
