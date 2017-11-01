@@ -6,12 +6,12 @@
 #include <Adafruit_NeoPixel.h>
 #include <EEPROM.h>
 
-#define BUTTON_PIN   8    // Digital IO pin connected to the button.  This will be
+#define BUTTON_PIN   2    // Digital IO pin connected to the button.  This will be
 // driven with a pull-up resistor so the switch should
 // pull the pin to ground momentarily.  On a high -> low
 // transition the button press logic will execute.
 
-#define PIXEL_PIN    4    // Digital IO pin connected to the NeoPixels.
+#define PIXEL_PIN    0    // Digital IO pin connected to the NeoPixels.
 
 #define PIXEL_COUNT 50
 
@@ -29,7 +29,7 @@ uint8_t showType = 0;    // the light show type we want to watch (see startShow(
 boolean doCycle = false; // whether or not to keep the current light show cycling.  Used for animations so they keep running
 
 void setup() {
-  showType = EEPROM.read(0); // get last light show preference reading before the device was turned off/restarted
+  //showType = EEPROM.read(0); // get last light show preference reading before the device was turned off/restarted
 
   pinMode(BUTTON_PIN, INPUT_PULLUP); // set the button pin as input and engage the pullup resistor
   strip.begin();
@@ -60,11 +60,11 @@ bool CheckButtonPress() {
     if (newState == LOW) {
       showType++;
 
-      if (showType > 11) {
+      if (showType > 12) {
         showType = 0;
       }
 
-      EEPROM.write(0, showType); // save the user's preference so we load it back to the same state on startup
+      //EEPROM.write(0, showType); // save the user's preference so we load it back to the same state on startup
       startShow(showType);
     }
   }
@@ -92,25 +92,32 @@ void startShow(uint8_t i) {
     case 4: colorWipe(strip.Color(0, 0, 255), 50);  // Blue
       doCycle = false;
       break;
-    case 5: theaterChase(strip.Color(255, 255, 255), 50); // White
+    case 5: 
+      // continuous color wipe cycle
+      colorWipe(strip.Color(255, 0, 0), 50);  // Red 
+      colorWipe(strip.Color(0, 255, 0), 50);  // Green 
+      colorWipe(strip.Color(0, 0, 255), 50);  // Blue
       doCycle = true;
       break;
-    case 6: theaterChase(strip.Color(127, 0, 0), 50); // Red
+    case 6: theaterChase(strip.Color(255, 255, 255), 50); // White
       doCycle = true;
       break;
-    case 7: theaterChase(strip.Color(0,   127,   0), 50); // Green
+    case 7: theaterChase(strip.Color(127, 0, 0), 50); // Red
       doCycle = true;
       break;
-    case 8: theaterChase(strip.Color(0,   0, 127), 50); // Blue
+    case 8: theaterChase(strip.Color(0,   127,   0), 50); // Green
       doCycle = true;
       break;
-    case 9: rainbow(20);
+    case 9: theaterChase(strip.Color(0,   0, 127), 50); // Blue
       doCycle = true;
       break;
-    case 10: rainbowCycle(20);
+    case 10: rainbow(20);
       doCycle = true;
       break;
-    case 11: theaterChaseRainbow(50);
+    case 11: rainbowCycle(20);
+      doCycle = true;
+      break;
+    case 12: theaterChaseRainbow(50);
       doCycle = true;
       break;
   }
