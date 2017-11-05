@@ -27,6 +27,11 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(PIXEL_COUNT, PIXEL_PIN, NEO_GRB + NE
 bool oldState = HIGH;    // tracks previously read push button state
 uint8_t showType = 0;    // the light show type we want to watch (see startShow() for explanation of each number)
 boolean doCycle = false; // whether or not to keep the current light show cycling.  Used for animations so they keep running
+boolean switchShow = false; // whether or not to switch the light show.  Set to true when button press occurs.
+
+// Define an array of popular christmas colors
+//                             Red                     Green                   Blue                    Yellow                    Purple
+uint32_t christmasColors[] = { strip.Color(255, 0, 0), strip.Color(0, 255, 0), strip.Color(0, 0, 255), strip.Color(255, 255, 0), strip.Color(128, 0, 128) };
 
 void setup() {
   //showType = EEPROM.read(0); // get last light show preference reading before the device was turned off/restarted
@@ -42,42 +47,37 @@ void setup() {
 void loop() {
   CheckButtonPress();
 
+  if (switchShow) {
+    showType++;
+
+    if (showType > 15) {
+      showType = 0;
+    }
+
+    //EEPROM.write(0, showType); // save the user's preference so we load it back to the same state on startup
+  }
+
   // Ensure that animations keep animating
-  if (doCycle) {
+  if (doCycle || switchShow) {
+    switchShow = false;
     startShow(showType);
   }
 }
 
 bool CheckButtonPress() {
-  bool newState = digitalRead(BUTTON_PIN); // Get current button state.
+  bool state = digitalRead(BUTTON_PIN); // Get current button state.
 
   // Check if state changed from high to low (button press).
-  if (newState == LOW && oldState == HIGH) {
-    // Short delay to debounce button.
-    delay(20);
-    // Check if button is still low after debounce.
-    newState = digitalRead(BUTTON_PIN);
-    if (newState == LOW) {
-      showType++;
-
-      if (showType > 12) {
-        showType = 0;
-      }
-
-      //EEPROM.write(0, showType); // save the user's preference so we load it back to the same state on startup
-      startShow(showType);
-    }
+  if (state == LOW) {
+    switchShow = true;
   }
 
-  // Set the last button state to the old state.
-  oldState = newState;
-
-  return newState;
+  return state;
 }
 
 void startShow(uint8_t i) {
   switch (i) {
-    case 0: christmasColorWipe(50);
+    case 0: multiColorWipe(christmasColors, sizeof christmasColors / sizeof *christmasColors, 50);
       doCycle = false;
       break;
     case 1: colorWipe(strip.Color(255, 255, 255), 50);  // White
@@ -92,60 +92,67 @@ void startShow(uint8_t i) {
     case 4: colorWipe(strip.Color(0, 0, 255), 50);  // Blue
       doCycle = false;
       break;
-    case 5: 
+    case 5: colorWipe(strip.Color(128, 0, 128), 50);  // Purple
+      doCycle = false;
+      break;
+    case 6: 
       // continuous color wipe cycle
       colorWipe(strip.Color(255, 0, 0), 50);  // Red 
       colorWipe(strip.Color(0, 255, 0), 50);  // Green 
       colorWipe(strip.Color(0, 0, 255), 50);  // Blue
+      colorWipe(strip.Color(128, 0, 128), 50);  // Purple
       doCycle = true;
       break;
-    case 6: theaterChase(strip.Color(255, 255, 255), 50); // White
+    case 7: theaterChase(strip.Color(255, 255, 255), 150); // White
       doCycle = true;
       break;
-    case 7: theaterChase(strip.Color(127, 0, 0), 50); // Red
+    case 8: theaterChase(strip.Color(255, 0, 0), 150); // Red
       doCycle = true;
       break;
-    case 8: theaterChase(strip.Color(0,   127,   0), 50); // Green
+    case 9: theaterChase(strip.Color(0, 255, 0), 150); // Green
       doCycle = true;
       break;
-    case 9: theaterChase(strip.Color(0,   0, 127), 50); // Blue
+    case 10: theaterChase(strip.Color(0, 0, 255), 150); // Blue
       doCycle = true;
       break;
-    case 10: rainbow(20);
+    case 11: theaterChase(strip.Color(128, 0, 128), 150); // Purple
       doCycle = true;
       break;
-    case 11: rainbowCycle(20);
+    case 12: multiColorTheaterChase(christmasColors, sizeof christmasColors / sizeof *christmasColors, 150); // Christmas Colors
       doCycle = true;
       break;
-    case 12: theaterChaseRainbow(50);
+    case 13: rainbow(20);
+      doCycle = true;
+      break;
+    case 14: rainbowCycle(20);
+      doCycle = true;
+      break;
+    case 15: theaterChaseRainbow(150);
       doCycle = true;
       break;
   }
 }
 
 // Fill the dots one after the other with an alternating traditional christmas color (red, green, blue, or yellow)
-void christmasColorWipe(uint8_t wait) {
-  //                             Red                     Green                   Blue                    Yellow
-  uint32_t christmasColors[] = { strip.Color(255, 0, 0), strip.Color(0, 255, 0), strip.Color(0, 0, 255), strip.Color(255, 255, 0) };
-
+void multiColorWipe(uint32_t colors[], size_t arrLength, uint8_t wait) {
   int colorNum = 0;
 
   for (uint16_t i = 0; i < strip.numPixels(); i++) {
-    strip.setPixelColor(i, christmasColors[colorNum]);
+    strip.setPixelColor(i, colors[colorNum]);
     strip.show();
 
     colorNum++;
 
-    if (colorNum > 3) {
+    if (colorNum >= arrLength) {
       colorNum = 0;
     }
 
     delay(wait);
 
     // button pressed in the middle of the animation, stop execution of this animation
-    if (CheckButtonPress() == LOW) {
-      return;
-    }
+    //if (CheckButtonPress() == LOW) {
+    //  return;
+    //}
   }
 }
 
@@ -157,9 +164,9 @@ void colorWipe(uint32_t c, uint8_t wait) {
     delay(wait);
 
     // button pressed in the middle of the animation, stop execution of this animation
-    if (CheckButtonPress() == LOW) {
-      return;
-    }
+    //if (CheckButtonPress() == LOW) {
+    //  return;
+    //}
   }
 }
 
@@ -174,9 +181,9 @@ void rainbow(uint8_t wait) {
     delay(wait);
 
     // button pressed in the middle of the animation, stop execution of this animation
-    if (CheckButtonPress() == LOW) {
-      return;
-    }
+    //if (CheckButtonPress() == LOW) {
+    //  return;
+    //}
   }
 }
 
@@ -192,9 +199,9 @@ void rainbowCycle(uint8_t wait) {
     delay(wait);
 
     // button pressed in the middle of the animation, stop execution of this animation
-    if (CheckButtonPress() == LOW) {
-      return;
-    }
+    //if (CheckButtonPress() == LOW) {
+    //  return;
+    //}
   }
 }
 
@@ -215,9 +222,40 @@ void theaterChase(uint32_t c, uint8_t wait) {
     }
 
     // button pressed in the middle of the animation, stop execution of this animation
-    if (CheckButtonPress() == LOW) {
-      return;
+    //if (CheckButtonPress() == LOW) {
+    //  return;
+    //}
+  }
+}
+
+//Theatre-style crawling lights with multiple colors.
+void multiColorTheaterChase(uint32_t colors[], size_t arrLength, uint8_t wait) {
+  int colorNum = 0;
+  
+  for (int j = 0; j < 10; j++) { //do 10 cycles of chasing
+    for (int q = 0; q < 3; q++) {
+      for (int i = 0; i < strip.numPixels(); i = i + 3) {
+        strip.setPixelColor(i + q, colors[colorNum]);  //turn every third pixel on
+
+        colorNum++;
+
+        if (colorNum >= arrLength) {
+          colorNum = 0;
+        }
+      }
+      strip.show();
+
+      delay(wait);
+
+      for (int i = 0; i < strip.numPixels(); i = i + 3) {
+        strip.setPixelColor(i + q, 0);      //turn every third pixel off
+      }
     }
+
+    // button pressed in the middle of the animation, stop execution of this animation
+    //if (CheckButtonPress() == LOW) {
+    //  return;
+    //}
   }
 }
 
@@ -238,9 +276,9 @@ void theaterChaseRainbow(uint8_t wait) {
     }
 
     // button pressed in the middle of the animation, stop execution of this animation
-    if (CheckButtonPress() == LOW) {
-      return;
-    }
+    //if (CheckButtonPress() == LOW) {
+    //  return;
+    //}
   }
 }
 
