@@ -31,10 +31,10 @@ boolean switchShow = false; // whether or not to switch the light show.  Set to 
 
 // Define an array of popular christmas colors
 //                             Red                     Green                   Blue                    Yellow                    Purple
-uint32_t christmasColors[] = { strip.Color(255, 0, 0), strip.Color(0, 255, 0), strip.Color(0, 0, 255), strip.Color(255, 255, 0), strip.Color(128, 0, 128) };
+uint32_t christmasColors[] = { strip.Color(0, 255, 0), strip.Color(255, 0, 0), strip.Color(0, 0, 255), strip.Color(255, 255, 0), strip.Color(0, 75, 130) };
 
 void setup() {
-  //showType = EEPROM.read(0); // get last light show preference reading before the device was turned off/restarted
+  showType = EEPROM.read(0); // get last light show preference reading before the device was turned off/restarted
 
   pinMode(BUTTON_PIN, INPUT_PULLUP); // set the button pin as input and engage the pullup resistor
   strip.begin();
@@ -50,72 +50,72 @@ void loop() {
   if (switchShow) {
     showType++;
 
-    if (showType > 15) {
+    if (showType > 14) {
       showType = 0;
     }
 
-    //EEPROM.write(0, showType); // save the user's preference so we load it back to the same state on startup
+    EEPROM.write(0, showType); // save the user's preference so we load it back to the same state on startup
   }
 
-  // Ensure that animations keep animating
+  // Ensure that animations keep animating or switch the show because a button press was detected
   if (doCycle || switchShow) {
     switchShow = false;
     startShow(showType);
   }
 }
 
-bool CheckButtonPress() {
-  bool state = digitalRead(BUTTON_PIN); // Get current button state.
+void CheckButtonPress() {
+  bool currState = digitalRead(BUTTON_PIN); // Get current button state.
 
   // Check if state changed from high to low (button press).
-  if (state == LOW) {
+  if (currState == LOW && oldState == HIGH) {
     switchShow = true;
   }
 
-  return state;
+  oldState = currState;
 }
 
 void startShow(uint8_t i) {
   switch (i) {
-    case 0: multiColorWipe(christmasColors, sizeof christmasColors / sizeof *christmasColors, 50);
+    case 0: multiColorWipe(christmasColors, sizeof christmasColors / sizeof *christmasColors, 100);
       doCycle = false;
       break;
-    case 1: colorWipe(strip.Color(255, 255, 255), 50);  // White
+    case 1:colorWipe(strip.Color(255, 255, 255), 100);  // White
       doCycle = false;
       break;
-    case 2: colorWipe(strip.Color(255, 0, 0), 50);  // Red
+    case 2: colorWipe(strip.Color(0, 255, 0), 100);  // Red
       doCycle = false;
       break;
-    case 3: colorWipe(strip.Color(0, 255, 0), 50);  // Green
+    case 3: colorWipe(strip.Color(255, 0, 0), 100);  // Green
       doCycle = false;
       break;
-    case 4: colorWipe(strip.Color(0, 0, 255), 50);  // Blue
+    case 4: colorWipe(strip.Color(0, 0, 255), 100);  // Blue
       doCycle = false;
       break;
-    case 5: colorWipe(strip.Color(128, 0, 128), 50);  // Purple
+    case 5: colorWipe(strip.Color(0, 75, 130), 100);  // Purple
       doCycle = false;
       break;
     case 6: 
       // continuous color wipe cycle
-      colorWipe(strip.Color(255, 0, 0), 50);  // Red 
-      colorWipe(strip.Color(0, 255, 0), 50);  // Green 
-      colorWipe(strip.Color(0, 0, 255), 50);  // Blue
-      colorWipe(strip.Color(128, 0, 128), 50);  // Purple
+      colorWipe(strip.Color(0, 255, 0), 100);  // Red 
+      colorWipe(strip.Color(255, 0, 0), 100);  // Green 
+      colorWipe(strip.Color(0, 0, 255), 100);  // Blue
+      colorWipe(strip.Color(0, 75, 130), 100);  // Purple
       doCycle = true;
       break;
     case 7: theaterChase(strip.Color(255, 255, 255), 150); // White
       doCycle = true;
       break;
-    case 8: theaterChase(strip.Color(255, 0, 0), 150); // Red
+    case 8: theaterChase(strip.Color(0, 255, 0), 150); // Red
       doCycle = true;
       break;
-    case 9: theaterChase(strip.Color(0, 255, 0), 150); // Green
+    case 9: theaterChase(strip.Color(255, 0, 0), 150); // Green
       doCycle = true;
       break;
     case 10: theaterChase(strip.Color(0, 0, 255), 150); // Blue
       doCycle = true;
       break;
-    case 11: theaterChase(strip.Color(128, 0, 128), 150); // Purple
+    case 11: theaterChase(strip.Color(0, 75, 130), 150); // Purple
       doCycle = true;
       break;
     case 12: multiColorTheaterChase(christmasColors, sizeof christmasColors / sizeof *christmasColors, 150); // Christmas Colors
@@ -124,10 +124,7 @@ void startShow(uint8_t i) {
     case 13: rainbow(20);
       doCycle = true;
       break;
-    case 14: rainbowCycle(20);
-      doCycle = true;
-      break;
-    case 15: theaterChaseRainbow(150);
+    case 14: theaterChaseRainbow(150);
       doCycle = true;
       break;
   }
@@ -149,8 +146,12 @@ void multiColorWipe(uint32_t colors[], size_t arrLength, uint8_t wait) {
 
     delay(wait);
 
-    // button pressed in the middle of the animation, stop execution of this animation
-    //if (CheckButtonPress() == LOW) {
+    // button pressed in the middle of the animation
+    if (!switchShow) {
+      CheckButtonPress();
+    }
+
+    //if (switchShow) {
     //  return;
     //}
   }
@@ -163,8 +164,11 @@ void colorWipe(uint32_t c, uint8_t wait) {
     strip.show();
     delay(wait);
 
-    // button pressed in the middle of the animation, stop execution of this animation
-    //if (CheckButtonPress() == LOW) {
+    if (!switchShow) {
+      CheckButtonPress();
+    }
+
+    //if (switchShow) {
     //  return;
     //}
   }
@@ -180,26 +184,12 @@ void rainbow(uint8_t wait) {
     strip.show();
     delay(wait);
 
-    // button pressed in the middle of the animation, stop execution of this animation
-    //if (CheckButtonPress() == LOW) {
-    //  return;
-    //}
-  }
-}
-
-// Slightly different, this makes the rainbow equally distributed throughout
-void rainbowCycle(uint8_t wait) {
-  uint16_t i, j;
-
-  for (j = 0; j < 256 * 5; j++) { // 5 cycles of all colors on wheel
-    for (i = 0; i < strip.numPixels(); i++) {
-      strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
+    // button pressed in the middle of the animation
+    if (!switchShow) {
+      CheckButtonPress();
     }
-    strip.show();
-    delay(wait);
 
-    // button pressed in the middle of the animation, stop execution of this animation
-    //if (CheckButtonPress() == LOW) {
+    //if (switchShow) {
     //  return;
     //}
   }
@@ -207,22 +197,24 @@ void rainbowCycle(uint8_t wait) {
 
 //Theatre-style crawling lights.
 void theaterChase(uint32_t c, uint8_t wait) {
-  for (int j = 0; j < 10; j++) { //do 10 cycles of chasing
-    for (int q = 0; q < 3; q++) {
-      for (int i = 0; i < strip.numPixels(); i = i + 3) {
-        strip.setPixelColor(i + q, c);  //turn every third pixel on
-      }
-      strip.show();
+  for (int q = 0; q < 3; q++) {
+    for (int i = 0; i < strip.numPixels(); i = i + 3) {
+      strip.setPixelColor(i + q, c);  //turn every third pixel on
+    }
+    strip.show();
 
-      delay(wait);
+    delay(wait);
 
-      for (int i = 0; i < strip.numPixels(); i = i + 3) {
-        strip.setPixelColor(i + q, 0);      //turn every third pixel off
-      }
+    for (int i = 0; i < strip.numPixels(); i = i + 3) {
+      strip.setPixelColor(i + q, 0);      //turn every third pixel off
     }
 
-    // button pressed in the middle of the animation, stop execution of this animation
-    //if (CheckButtonPress() == LOW) {
+    // button pressed in the middle of the animation
+    if (!switchShow) {
+      CheckButtonPress();
+    }
+
+    //if (switchShow) {
     //  return;
     //}
   }
@@ -232,28 +224,30 @@ void theaterChase(uint32_t c, uint8_t wait) {
 void multiColorTheaterChase(uint32_t colors[], size_t arrLength, uint8_t wait) {
   int colorNum = 0;
   
-  for (int j = 0; j < 10; j++) { //do 10 cycles of chasing
-    for (int q = 0; q < 3; q++) {
-      for (int i = 0; i < strip.numPixels(); i = i + 3) {
-        strip.setPixelColor(i + q, colors[colorNum]);  //turn every third pixel on
+  for (int q = 0; q < 3; q++) {
+    for (int i = 0; i < strip.numPixels(); i = i + 3) {
+      strip.setPixelColor(i + q, colors[colorNum]);  //turn every third pixel on
 
-        colorNum++;
+      colorNum++;
 
-        if (colorNum >= arrLength) {
-          colorNum = 0;
-        }
-      }
-      strip.show();
-
-      delay(wait);
-
-      for (int i = 0; i < strip.numPixels(); i = i + 3) {
-        strip.setPixelColor(i + q, 0);      //turn every third pixel off
+      if (colorNum >= arrLength) {
+        colorNum = 0;
       }
     }
+    strip.show();
 
-    // button pressed in the middle of the animation, stop execution of this animation
-    //if (CheckButtonPress() == LOW) {
+    delay(wait);
+
+    for (int i = 0; i < strip.numPixels(); i = i + 3) {
+      strip.setPixelColor(i + q, 0);      //turn every third pixel off
+    }
+
+    // button pressed in the middle of the animation
+    if (!switchShow) {
+      CheckButtonPress();
+    }
+
+    //if (switchShow) {
     //  return;
     //}
   }
@@ -273,12 +267,16 @@ void theaterChaseRainbow(uint8_t wait) {
       for (int i = 0; i < strip.numPixels(); i = i + 3) {
         strip.setPixelColor(i + q, 0);      //turn every third pixel off
       }
-    }
 
-    // button pressed in the middle of the animation, stop execution of this animation
-    //if (CheckButtonPress() == LOW) {
-    //  return;
-    //}
+      // button pressed in the middle of the animation
+      if (!switchShow) {
+        CheckButtonPress();
+      }
+
+      if (switchShow) {
+        return;
+      }
+    }
   }
 }
 
